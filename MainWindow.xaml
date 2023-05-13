@@ -74,7 +74,10 @@
         <Button x:Name="ButtonConnect" Content="CONECTAR" Margin="0,20,20,0" VerticalAlignment="Top" Width="270"
                 Height="64" FontSize="36" FontWeight="Medium" Click="ButtonConnect_Click" HorizontalAlignment="Right" />
 
-        <Label x:Name="LabelFech" Content="000000" HorizontalAlignment="Center" Margin="1742,269,20,0"
+        <Button x:Name="ButtonRequest" Content="REQUISITAR" Margin="0,20,340,0" VerticalAlignment="Top" Width="270"
+                Height="64" FontSize="36" FontWeight="Medium" Click="ButtonRequest_Click" HorizontalAlignment="Right" />
+
+        <Label x:Name="LabelValueClose" Content="000000" HorizontalAlignment="Center" Margin="1742,269,20,0"
                VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
                FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
                HorizontalContentAlignment="Center" IsEnabled="False">
@@ -83,7 +86,7 @@
             </Label.BorderBrush>
         </Label>
 
-        <Label x:Name="LabelUltimo" Content="000000" HorizontalAlignment="Center" Margin="1742,361,20,0"
+        <Label x:Name="LabelValueLast" Content="000000" HorizontalAlignment="Center" Margin="1742,361,20,0"
                VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
                FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
                HorizontalContentAlignment="Center" IsEnabled="False">

@@ -1,6 +1,8 @@
 ﻿using System.ComponentModel;
 using System.Threading;
 using System;
+using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
 using RTDTrading;
 using Constants = CompositeMan.Utils.Constants;
@@ -12,347 +14,143 @@ namespace CompositeMan
     {
         private const string RtdProgId = "rtdtrading.rtdserver";
 
+        private readonly RtdUpdateEvent _updateEvent = new();
+
         private IRtdServer? _rtdServer;
 
-        object? ret;
-        string? connected;
-        bool firstUpdate = true;
-        int heartbeatStatus, btnStatus;
-        double[] source_DOL = { 0, 0, 0 };
+        private int _serverState = -1;
 
-        BackgroundWorker? backgroundWorker;
+        // Topic Ids
+        int[] topicIDs = { 101, 102, 103 };
 
-        private double _trend;
-        private double _axisMax;
-        private double _axisMin;
-
-        const string tpIDA = "101", tpIDF = "102", tpIDU = "103";
+        private bool IsRtdConnected => _serverState == 1;
 
         public MainWindow()
         {
             InitializeComponent();
-            InitializeTask();
+            Task.Run(InitializeRtdServerAsync);
         }
 
-        void InitializeTask()
-        {
-            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
-            CancellationToken cancellationToken = cancellationTokenSource.Token;
-            Task task = DoWorkAsync(cancellationToken);
-        }
-
-        private async Task DoWorkAsync(CancellationToken cancellationToken)
-        {
-            // Do your stuff here
-
-            int topicCount = 0;
-            Console.WriteLine("ScApp >> init topicCount = {0}", topicCount);
-            double value;
-
-            while (heartbeatStatus == 1)
-            {
-                // Check that the RTD server is still alive.
-
-                if (!cancellationToken.IsCancellationRequested)
-                {
-                    heartbeatStatus = _rtdServer.Heartbeat();
-                    Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
-
-                    // Get data from the RTD server.
-                    object[,] r = new object[2, 3];
-                    r = (object[,])_rtdServer.RefreshData(topicCount);
-
-                    Console.WriteLine("ScApp >> RefreshData topicCount = {0}", topicCount);
-                    //Console.WriteLine("ScApp >> retval for 'RefreshData()' = {0}", r[1, 0].ToString());
-
-                    if (r.Length > 0)
-                    {
-                        for (int i = 0; i < r.Length / 2; i++)
-                        {
-                            value = 0;
-                            double.TryParse(r[1, i].ToString(), out value);
-                            Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(),
-                                r[0, i].ToString(), r.Length);
-
-                            if (r[0, i].ToString() == tpIDU)
-                            {
-                                await Dispatcher.InvokeAsync(() => { LabelUltimo.Content = value.ToString(); });
-                            }
-                        }
-
-                        if (firstUpdate)
-                        {
-                            firstUpdate = false;
-                            //resizeLadder();
-                        }
-                    }
-
-                    Console.WriteLine("ScApp >> r.Length = {0}", r.Length);
-                    await Task.Delay(100);
-                }
-                else
-                {
-                    break;
-                }
-            }
-        }
-
-        private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = (BackgroundWorker)sender;
-
-            //Do your stuff here
-
-            int topicCount = 0;
-            Console.WriteLine("ScApp >> init topicCount = {0}", topicCount);
-            double value;
-
-            while (heartbeatStatus == 1)
-            {
-                // Check that the RTD server is still alive.
-
-                if (!worker.CancellationPending)
-                {
-                    heartbeatStatus = _rtdServer.Heartbeat();
-                    Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
-
-                    // Get data from the RTD server.
-                    object[,] r = new object[2, 3];
-                    r = (object[,])_rtdServer.RefreshData(topicCount);
-
-                    Console.WriteLine("ScApp >> RefreshData topicCount = {0}", topicCount);
-                    //Console.WriteLine("ScApp >> retval for 'RefreshData()' = {0}", r[1, 0].ToString());
-
-                    if (r.Length > 0)
-                    {
-                        for (int i = 0; i < r.Length / 2; i++)
-                        {
-                            value = 0;
-                            double.TryParse(r[1, i].ToString(), out value);
-                            Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(),
-                                r[0, i].ToString(), r.Length);
-
-                            if (r[0, i].ToString() == tpIDU)
-                            {
-                                this.Dispatcher.Invoke(() => { LabelUltimo.Content = value.ToString(); });
-                            }
-                        }
-
-                        if (firstUpdate)
-                        {
-                            firstUpdate = false;
-                            //resizeLadder();
-                        }
-                    }
-
-                    Console.WriteLine("ScApp >> r.Length = {0}", r.Length);
-                    Thread.Sleep(100);
-                    worker.ReportProgress(0, "AN OBJECT TO PASS TO THE UI-THREAD");
-                }
-                else
-                {
-                    e.Cancel = true;
-                    break;
-                }
-            }
-        }
-
-
-        private void ButtonConnect_Click(object sender, RoutedEventArgs e)
-        {
-            if (btnStatus == 0)
-            {
-                ProcessRTD();
-                if (IsRTDConnected())
-                {
-                    source_DOL = GetDataRTD(Constants.TickerIndfut);
-                    if (source_DOL != null)
-                    {
-                        PrintResult(source_DOL);
-
-                        // if (backgroundWorker.IsBusy != true)
-                        // {
-                        //     // Start the asynchronous operation.
-                        //     backgroundWorker.RunWorkerAsync();
-                        // }
-                    }
-
-                    ButtonConnect.Content = "DESCONECTAR";
-                    LabelStatusConnection.Text = "Conectado";
-                    btnStatus = 1;
-                }
-            }
-            else if (btnStatus == 1)
-            {
-                DisconnectRTD(1);
-                TerminateRTD();
-                if (!IsRTDConnected())
-                {
-                    ButtonConnect.Content = "CONECTAR";
-                    LabelStatusConnection.Text = "Desconectado";
-                    btnStatus = 0;
-                    LavelValueOpen.Content = "";
-                    LabelFech.Content = "";
-                    LabelUltimo.Content = "";
-
-                    // if (backgroundWorker.WorkerSupportsCancellation == true)
-                    // {
-                    //     // Cancel the asynchronous operation.
-                    //     backgroundWorker.CancelAsync();
-                    // }
-                }
-            }
-        }
-
-        void ProcessRTD()
+        private async Task InitializeRtdServerAsync()
         {
             try
             {
-                // Create the RTD server.
-                Type rtd;
-                Object rtdServer = null;
-                rtd = Type.GetTypeFromProgID(RtdProgId);
-                rtdServer = Activator.CreateInstance(rtd);
-                _rtdServer = rtdServer as IRtdServer;
-                Console.WriteLine("ScApp >> rtdServer = {0}", rtdServer);
+                await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = "Iniciando servidor"; });
 
-                // Start the RTD server.
-                IRTDUpdateEvent updateEvent = new IRTDUpdateEvent();
-                ret = _rtdServer.ServerStart(updateEvent);
-                connected = ret.ToString();
-                Console.WriteLine("ScApp >> updateEvent = {0}", updateEvent.ToString());
-                Console.WriteLine("ScApp >> ret for 'ServerStart()' = {0}", ret.ToString());
+                // Create the RTD server
+                var rtdType = Type.GetTypeFromProgID(RtdProgId);
+                if (rtdType == null)
+                {
+                    throw new Exception("Houve uma olhada ao carregar o tipo do objeto");
+                }
+
+                _rtdServer = Activator.CreateInstance(rtdType) as IRtdServer;
+
+                // Start the RTD server
+                if (_rtdServer == null)
+                {
+                    throw new Exception("Houve uma olhada ao carregar o servidor");
+                }
+
+                _serverState = _rtdServer.ServerStart(_updateEvent);
+                
+                // Server Started. Update the Label on the UI thread
+                await Dispatcher.InvokeAsync(() => { UpdateUi(IsRtdConnected); });
             }
             catch (Exception e)
             {
-                LabelStatusConnection.Text = "Houve um erro, tente novamente.";
-                Console.WriteLine("ScApp >> Error: {0} ", e.Message);
+                await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = $"Houve um erro. {e.Message}"; });
             }
         }
 
-        private double[] GetDataRTD(string topic1)
+        private void ButtonConnect_Click(object sender, RoutedEventArgs e)
         {
-            double[] value = { 0, 0, 0 };
-            int[] topicIDs = new int[3];
-            topicIDs[0] = 101;
-            topicIDs[1] = 102;
-            topicIDs[2] = 103;
-            // Connect Data.
+            // Check if the server is already connected
+            if (_serverState == 1)
+            {
+                DisconnectRtd();
+                TerminateRtd();
+                UpdateUi(IsRtdConnected);
+                return;
+            }
+
+            // Not Connected, try to connect
+            Task.Run(InitializeRtdServerAsync);
+        }
+
+        private void ButtonRequest_Click(object sender, RoutedEventArgs e)
+        {
+            // If not connected, return
+            if (_serverState != 1) return;
+
+            MarketData? marketData = GetDataRtd(Constants.TickerIndfut);
+            UpdateUi(IsRtdConnected, marketData);
+        }
+
+        private MarketData? GetDataRtd(string ticker)
+        {
+            if (_rtdServer == null) return null;
+
+            // Topic Names
             Object[] topics = new Object[2];
-            topics[0] = topic1;
+            topics[0] = ticker;
+
+            // Connect to the RTD server and retrieve data
+            object? result;
 
             topics[1] = "ABE";
-            // TODO - Erro aqui - se o Profit não estiver aberto - precisa de uma forma de esperar
-            ret = _rtdServer.ConnectData(topicIDs[0], topics, true);
-            double.TryParse(ret.ToString(), out value[0]);
-            Console.WriteLine("ScApp >> ret for 'ConnectData()' = {0} for topicID = {1}", ret.ToString(), topicIDs[0]);
+            result = _rtdServer.ConnectData(topicIDs[0], topics, true);
+            double.TryParse(result.ToString(), out var openPrice);
 
             topics[1] = "FEC";
-            ret = _rtdServer.ConnectData(topicIDs[1], topics, true);
-            double.TryParse(ret.ToString(), out value[1]);
-            Console.WriteLine("ScApp >> ret for 'ConnectData()' = {0} for topicID = {1}", ret.ToString(), topicIDs[1]);
+            result = _rtdServer.ConnectData(topicIDs[1], topics, true);
+            double.TryParse(result.ToString(), out var closePrice);
 
             topics[1] = "ULT";
-            ret = _rtdServer.ConnectData(topicIDs[2], topics, true);
-            double.TryParse(ret.ToString(), out value[2]);
-            Console.WriteLine("ScApp >> ret for 'ConnectData()' = {0} for topicID = {1}", ret.ToString(), topicIDs[2]);
+            result = _rtdServer.ConnectData(topicIDs[2], topics, true);
+            double.TryParse(result.ToString(), out var lastPrice);
 
-            // Loop and wait for RTD to notify (via callback) that
-            // data is available.
-            heartbeatStatus = _rtdServer.Heartbeat();
-            Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
-
-            return value;
+            return new MarketData(openPrice, closePrice, lastPrice);
         }
 
-        private void RefreshDataRTD(object sender, DoWorkEventArgs e)
+        private void UpdateUi(bool isConnected, MarketData? marketData = null)
         {
-            int topicCount = 0;
-            Console.WriteLine("ScApp >> init topicCount = {0}", topicCount);
-            double value;
-
-            //while (status == 1 && !_shouldStop)
-            while (heartbeatStatus == 1)
+            ButtonConnect.Content = isConnected ? "DESCONECTAR" : "CONECTAR";
+            LabelStatusConnection.Text = isConnected ? "Conectado" : "Desconectado";
+            
+            if (marketData != null)
             {
-                // Check that the RTD server is still alive.
+                LavelValueOpen.Content = marketData.OpenPrice.ToString(CultureInfo.InvariantCulture);
+                LabelValueClose.Content = marketData.ClosePrice.ToString(CultureInfo.InvariantCulture);
+                LabelValueLast.Content = marketData.LastPrice.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                LavelValueOpen.Content = "";
+                LabelValueClose.Content = "";
+                LabelValueLast.Content = "";
+            }
+        }
+        
+        private void DisconnectRtd()
+        {
+            if (!IsRtdConnected) return;
+            if (_rtdServer == null) return;
 
-                heartbeatStatus = _rtdServer.Heartbeat();
-                if (heartbeatStatus == 0)
-                {
-                    LabelStatusConnection.Text = "Conectado";
-                }
-                else
-                {
-                    LabelStatusConnection.Text = "Houve um problema, tente conectar novamente.";
-                }
-
-                Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
-
-                // Get data from the RTD server.
-                object[,] r = new object[2, 3];
-                r = (object[,])_rtdServer.RefreshData(topicCount);
-
-                Console.WriteLine("ScApp >> RefreshData topicCount = {0}", topicCount);
-                //Console.WriteLine("ScApp >> retval for 'RefreshData()' = {0}", r[1, 0].ToString());
-
-                if (r.Length > 0)
-                {
-                    for (int i = 0; i < r.Length / 2; i++)
-                    {
-                        value = 0;
-                        double.TryParse(r[1, i].ToString(), out value);
-                        Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(),
-                            r[0, i].ToString(), r.Length);
-
-                        //if (r[0, i].ToString() == )
-                    }
-
-                    if (firstUpdate)
-                    {
-                        firstUpdate = false;
-                        //resizeLadder();
-                    }
-                }
-
-                Console.WriteLine("ScApp >> r.Length = {0}", r.Length);
-                Thread.Sleep(100);
+            foreach (var t in topicIDs)
+            {
+                _rtdServer.DisconnectData(t);
             }
         }
 
-        public void DisconnectRTD(int j)
-        {
-            // Disconnect from data topic.
-            int[] topicIDs = new int[3];
-            topicIDs[0] = 100 * j;
-            topicIDs[1] = topicIDs[0]++;
-            topicIDs[2] = topicIDs[1]++;
-            for (int i = 0; i < topicIDs.Length; i++)
-            {
-                _rtdServer.DisconnectData(topicIDs[i]);
-                Console.WriteLine("ScApp >> DisconnectData topicID = {0}", topicIDs[i]);
-            }
-        }
-
-        public void TerminateRTD()
+        private void TerminateRtd()
         {
             // Shutdown the RTD server.
-            if (IsRTDConnected())
-            {
-                _rtdServer.ServerTerminate();
-                Console.WriteLine("ScApp >> ServerTerminate");
-            }
-        }
+            if (!IsRtdConnected) return;
+            if (_rtdServer == null) return;
 
-        public void PrintResult(double[] source)
-        {
-            LavelValueOpen.Content = source[0].ToString();
-            LabelFech.Content = source[1].ToString();
-            LabelUltimo.Content = source[2].ToString();
-        }
-
-        private bool IsRTDConnected()
-        {
-            return ret.ToString() == "1";
+            _rtdServer.ServerTerminate();
+            _serverState = 0;
         }
 
 
@@ -368,12 +166,12 @@ namespace CompositeMan
         #endregion
     }
 
-    public class IRTDUpdateEvent : RTDTrading.IRTDUpdateEvent
+    public class RtdUpdateEvent : IRTDUpdateEvent
     {
         public long Count { get; set; }
         public int HeartbeatInterval { get; set; }
 
-        public IRTDUpdateEvent()
+        public RtdUpdateEvent()
         {
             // Do not call the RTD Heartbeat() method.
             HeartbeatInterval = -1;
@@ -392,24 +190,17 @@ namespace CompositeMan
 
     public class MarketData
     {
-        private double _abert, _fech, _ult;
+        public double OpenPrice { get; set; }
 
-        public double precoAbertura
-        {
-            get { return _abert; }
-            set { _abert = value; }
-        }
+        public double ClosePrice { get; set; }
 
-        public double precoFechamento
-        {
-            get { return _fech; }
-            set { _fech = value; }
-        }
+        public double LastPrice { get; set; }
 
-        public double precoUltimo
+        public MarketData(double openPrice, double closePrice, double lastPrice)
         {
-            get { return _ult; }
-            set { _ult = value; }
+            OpenPrice = openPrice;
+            ClosePrice = closePrice;
+            LastPrice = lastPrice;
         }
     }
 }
