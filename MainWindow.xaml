@@ -74,8 +74,12 @@
         <Button x:Name="ButtonConnect" Content="CONECTAR" Margin="0,20,20,0" VerticalAlignment="Top" Width="270"
                 Height="64" FontSize="36" FontWeight="Medium" Click="ButtonConnect_Click" HorizontalAlignment="Right" />
 
+        
         <Button x:Name="ButtonRequest" Content="REQUISITAR" Margin="0,20,340,0" VerticalAlignment="Top" Width="270"
                 Height="64" FontSize="36" FontWeight="Medium" Click="ButtonRequest_Click" HorizontalAlignment="Right" />
+
+        <Button x:Name="ButtonRefresh" Content="ATUALIZAR" Margin="0,20,680,0" VerticalAlignment="Top" Width="270"
+                Height="64" FontSize="36" FontWeight="Medium" Click="ButtonRefresh_Click" HorizontalAlignment="Right" />
 
         <Label x:Name="LabelValueClose" Content="000000" HorizontalAlignment="Center" Margin="1742,269,20,0"
                VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
@@ -104,7 +108,7 @@
         <Label HorizontalAlignment="Left" Margin="1622,148,0,0" VerticalAlignment="Top" FontSize="22" Content="Ativo"
                Padding="10,0,0,0" VerticalContentAlignment="Center" Height="30" Width="60" />
 
-        <Label x:Name="LabelAtivo" HorizontalAlignment="Left" Margin="90,120,0,0" VerticalAlignment="Top"
+        <Label x:Name="LabelValueTicker" HorizontalAlignment="Left" Margin="90,120,0,0" VerticalAlignment="Top"
                FontSize="22" Content="" Padding="10,0,0,0" VerticalContentAlignment="Center" Width="380" Height="29" />
 
     </Grid>
