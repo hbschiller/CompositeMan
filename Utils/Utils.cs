@@ -3,15 +3,15 @@
     static class Constants
     {
         // Securities Tickers
-        public const string tickerDOLFUT = "DOLFUT_F_0";
-        public const string tickerINDFUT = "INDFUT_F_0";
+        public const string TickerDolfut = "DOLFUT_F_0";
+        public const string TickerIndfut = "INDFUT_F_0";
 
         // Securities Title
-        public const string titleShortDOLFUT = "DOL";
-        public const string titleShortINDFUT = "IND";
+        public const string TitleShortDolfut = "DOL";
+        public const string TitleShortIndfut = "IND";
 
         // Strings
-        public const string stringVarPerc = "Variação Percentual";
+        public const string StringVarPerc = "Variação Percentual";
 
     }
 }

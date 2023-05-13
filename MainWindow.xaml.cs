@@ -4,110 +4,47 @@ using System;
 using System.Windows;
 using RTDTrading;
 using Constants = CompositeMan.Utils.Constants;
+using System.Threading.Tasks;
 
 namespace CompositeMan
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
-        const string RtdProgId = "rtdtrading.rtdserver";
+        private const string RtdProgId = "rtdtrading.rtdserver";
 
-        private string[]? _labels;
+        private IRtdServer? _rtdServer;
+
         object? ret;
         string? connected;
         bool firstUpdate = true;
-        int heartbeatStatus, btnStatus = 0;
+        int heartbeatStatus, btnStatus;
         double[] source_DOL = { 0, 0, 0 };
+
         BackgroundWorker? backgroundWorker;
 
         private double _trend;
         private double _axisMax;
         private double _axisMin;
 
-        IRtdServer server;
-        const String tpIDA = "101", tpIDF = "102", tpIDU = "103";
+        const string tpIDA = "101", tpIDF = "102", tpIDU = "103";
 
         public MainWindow()
         {
             InitializeComponent();
-            InitializeBackgroundWorker();
-
-        }
-        
-        void InitializeBackgroundWorker()
-        {
-            backgroundWorker = new BackgroundWorker
-            {
-                WorkerReportsProgress = true,
-                WorkerSupportsCancellation = true
-            };
-
-            backgroundWorker.DoWork += BackgroundWorkerOnDoWork;
-            backgroundWorker.ProgressChanged += BackgroundWorkerOnProgressChanged;
+            InitializeTask();
         }
 
-        private void BtnConnect(object sender, RoutedEventArgs e)
+        void InitializeTask()
         {
-
-            if (btnStatus == 0)
-            {
-                ProcessRTD();
-                if (IsRTDConnected())
-                {
-                    source_DOL = GetDataRTD(Constants.tickerINDFUT);
-                    if (source_DOL != null)
-                    {
-                        PrintResult(source_DOL);
-
-                        if (backgroundWorker.IsBusy != true)
-                        {
-                            // Start the asynchronous operation.
-                            backgroundWorker.RunWorkerAsync();
-                        }
-
-                    }
-                    btn_connect.Content = "DESCONECTAR";
-                    labelStatusConnection.Text = "Conectado";
-                    btnStatus = 1;
-                }
-            }
-            else if (btnStatus == 1)
-            {
-                DisconnectRTD(1);
-                TerminateRTD();
-                if (!IsRTDConnected())
-                {
-                    btn_connect.Content = "CONECTAR";
-                    labelStatusConnection.Text = "Desconectado";
-                    btnStatus = 0;
-                    label_abert.Content = "";
-                    label_fech.Content = "";
-                    label_ultimo.Content = "";
-
-                    if (backgroundWorker.WorkerSupportsCancellation == true)
-                    {
-                        // Cancel the asynchronous operation.
-                        backgroundWorker.CancelAsync();
-                    }
-
-                }
-            }
+            CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken cancellationToken = cancellationTokenSource.Token;
+            Task task = DoWorkAsync(cancellationToken);
         }
 
-        private void BackgroundWorkerOnProgressChanged(object sender, ProgressChangedEventArgs e)
+        private async Task DoWorkAsync(CancellationToken cancellationToken)
         {
-            object userObject = e.UserState;
-            int percentage = e.ProgressPercentage;
-            labelStatusConnection.Text = "Conectado";
-        }
+            // Do your stuff here
 
-        private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs e)
-        {
-            BackgroundWorker worker = (BackgroundWorker)sender;
-
-            //Do your stuff here
             int topicCount = 0;
             Console.WriteLine("ScApp >> init topicCount = {0}", topicCount);
             double value;
@@ -116,15 +53,14 @@ namespace CompositeMan
             {
                 // Check that the RTD server is still alive.
 
-                if (!worker.CancellationPending)
+                if (!cancellationToken.IsCancellationRequested)
                 {
-
-                    heartbeatStatus = server.Heartbeat();
+                    heartbeatStatus = _rtdServer.Heartbeat();
                     Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
 
                     // Get data from the RTD server.
                     object[,] r = new object[2, 3];
-                    r = (object[,])server.RefreshData(topicCount);
+                    r = (object[,])_rtdServer.RefreshData(topicCount);
 
                     Console.WriteLine("ScApp >> RefreshData topicCount = {0}", topicCount);
                     //Console.WriteLine("ScApp >> retval for 'RefreshData()' = {0}", r[1, 0].ToString());
@@ -135,18 +71,13 @@ namespace CompositeMan
                         {
                             value = 0;
                             double.TryParse(r[1, i].ToString(), out value);
-                            Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(), r[0, i].ToString(), r.Length);
+                            Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(),
+                                r[0, i].ToString(), r.Length);
 
                             if (r[0, i].ToString() == tpIDU)
                             {
-
-                                this.Dispatcher.Invoke(() =>
-                                {
-                                    label_ultimo.Content = value.ToString();
-                                });
-
+                                await Dispatcher.InvokeAsync(() => { LabelUltimo.Content = value.ToString(); });
                             }
-
                         }
 
                         if (firstUpdate)
@@ -155,6 +86,65 @@ namespace CompositeMan
                             //resizeLadder();
                         }
                     }
+
+                    Console.WriteLine("ScApp >> r.Length = {0}", r.Length);
+                    await Task.Delay(100);
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        private void BackgroundWorkerOnDoWork(object sender, DoWorkEventArgs e)
+        {
+            BackgroundWorker worker = (BackgroundWorker)sender;
+
+            //Do your stuff here
+
+            int topicCount = 0;
+            Console.WriteLine("ScApp >> init topicCount = {0}", topicCount);
+            double value;
+
+            while (heartbeatStatus == 1)
+            {
+                // Check that the RTD server is still alive.
+
+                if (!worker.CancellationPending)
+                {
+                    heartbeatStatus = _rtdServer.Heartbeat();
+                    Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
+
+                    // Get data from the RTD server.
+                    object[,] r = new object[2, 3];
+                    r = (object[,])_rtdServer.RefreshData(topicCount);
+
+                    Console.WriteLine("ScApp >> RefreshData topicCount = {0}", topicCount);
+                    //Console.WriteLine("ScApp >> retval for 'RefreshData()' = {0}", r[1, 0].ToString());
+
+                    if (r.Length > 0)
+                    {
+                        for (int i = 0; i < r.Length / 2; i++)
+                        {
+                            value = 0;
+                            double.TryParse(r[1, i].ToString(), out value);
+                            Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(),
+                                r[0, i].ToString(), r.Length);
+
+                            if (r[0, i].ToString() == tpIDU)
+                            {
+                                this.Dispatcher.Invoke(() => { LabelUltimo.Content = value.ToString(); });
+                            }
+                        }
+
+                        if (firstUpdate)
+                        {
+                            firstUpdate = false;
+                            //resizeLadder();
+                        }
+                    }
+
                     Console.WriteLine("ScApp >> r.Length = {0}", r.Length);
                     Thread.Sleep(100);
                     worker.ReportProgress(0, "AN OBJECT TO PASS TO THE UI-THREAD");
@@ -164,7 +154,53 @@ namespace CompositeMan
                     e.Cancel = true;
                     break;
                 }
+            }
+        }
 
+
+        private void ButtonConnect_Click(object sender, RoutedEventArgs e)
+        {
+            if (btnStatus == 0)
+            {
+                ProcessRTD();
+                if (IsRTDConnected())
+                {
+                    source_DOL = GetDataRTD(Constants.TickerIndfut);
+                    if (source_DOL != null)
+                    {
+                        PrintResult(source_DOL);
+
+                        // if (backgroundWorker.IsBusy != true)
+                        // {
+                        //     // Start the asynchronous operation.
+                        //     backgroundWorker.RunWorkerAsync();
+                        // }
+                    }
+
+                    ButtonConnect.Content = "DESCONECTAR";
+                    LabelStatusConnection.Text = "Conectado";
+                    btnStatus = 1;
+                }
+            }
+            else if (btnStatus == 1)
+            {
+                DisconnectRTD(1);
+                TerminateRTD();
+                if (!IsRTDConnected())
+                {
+                    ButtonConnect.Content = "CONECTAR";
+                    LabelStatusConnection.Text = "Desconectado";
+                    btnStatus = 0;
+                    LavelValueOpen.Content = "";
+                    LabelFech.Content = "";
+                    LabelUltimo.Content = "";
+
+                    // if (backgroundWorker.WorkerSupportsCancellation == true)
+                    // {
+                    //     // Cancel the asynchronous operation.
+                    //     backgroundWorker.CancelAsync();
+                    // }
+                }
             }
         }
 
@@ -177,20 +213,19 @@ namespace CompositeMan
                 Object rtdServer = null;
                 rtd = Type.GetTypeFromProgID(RtdProgId);
                 rtdServer = Activator.CreateInstance(rtd);
-                server = rtdServer as IRtdServer;
-                Console.WriteLine("ScApp >> rtdServer = {0}", rtdServer.ToString());
+                _rtdServer = rtdServer as IRtdServer;
+                Console.WriteLine("ScApp >> rtdServer = {0}", rtdServer);
 
                 // Start the RTD server.
                 IRTDUpdateEvent updateEvent = new IRTDUpdateEvent();
-                ret = server.ServerStart(updateEvent);
+                ret = _rtdServer.ServerStart(updateEvent);
                 connected = ret.ToString();
                 Console.WriteLine("ScApp >> updateEvent = {0}", updateEvent.ToString());
                 Console.WriteLine("ScApp >> ret for 'ServerStart()' = {0}", ret.ToString());
-
             }
             catch (Exception e)
             {
-                labelStatusConnection.Text = "Houve um erro, tente novamente.";
+                LabelStatusConnection.Text = "Houve um erro, tente novamente.";
                 Console.WriteLine("ScApp >> Error: {0} ", e.Message);
             }
         }
@@ -208,23 +243,23 @@ namespace CompositeMan
 
             topics[1] = "ABE";
             // TODO - Erro aqui - se o Profit não estiver aberto - precisa de uma forma de esperar
-            ret = server.ConnectData(topicIDs[0], topics, true);
+            ret = _rtdServer.ConnectData(topicIDs[0], topics, true);
             double.TryParse(ret.ToString(), out value[0]);
             Console.WriteLine("ScApp >> ret for 'ConnectData()' = {0} for topicID = {1}", ret.ToString(), topicIDs[0]);
 
             topics[1] = "FEC";
-            ret = server.ConnectData(topicIDs[1], topics, true);
+            ret = _rtdServer.ConnectData(topicIDs[1], topics, true);
             double.TryParse(ret.ToString(), out value[1]);
             Console.WriteLine("ScApp >> ret for 'ConnectData()' = {0} for topicID = {1}", ret.ToString(), topicIDs[1]);
 
             topics[1] = "ULT";
-            ret = server.ConnectData(topicIDs[2], topics, true);
+            ret = _rtdServer.ConnectData(topicIDs[2], topics, true);
             double.TryParse(ret.ToString(), out value[2]);
             Console.WriteLine("ScApp >> ret for 'ConnectData()' = {0} for topicID = {1}", ret.ToString(), topicIDs[2]);
 
             // Loop and wait for RTD to notify (via callback) that
             // data is available.
-            heartbeatStatus = server.Heartbeat();
+            heartbeatStatus = _rtdServer.Heartbeat();
             Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
 
             return value;
@@ -232,7 +267,6 @@ namespace CompositeMan
 
         private void RefreshDataRTD(object sender, DoWorkEventArgs e)
         {
-
             int topicCount = 0;
             Console.WriteLine("ScApp >> init topicCount = {0}", topicCount);
             double value;
@@ -242,20 +276,21 @@ namespace CompositeMan
             {
                 // Check that the RTD server is still alive.
 
-                heartbeatStatus = server.Heartbeat();
+                heartbeatStatus = _rtdServer.Heartbeat();
                 if (heartbeatStatus == 0)
                 {
-                    labelStatusConnection.Text = "Conectado";
+                    LabelStatusConnection.Text = "Conectado";
                 }
                 else
                 {
-                    labelStatusConnection.Text = "Houve um problema, tente conectar novamente.";
+                    LabelStatusConnection.Text = "Houve um problema, tente conectar novamente.";
                 }
+
                 Console.WriteLine("ScApp >> status for 'Heartbeat()' = {0}", heartbeatStatus.ToString());
 
                 // Get data from the RTD server.
                 object[,] r = new object[2, 3];
-                r = (object[,])server.RefreshData(topicCount);
+                r = (object[,])_rtdServer.RefreshData(topicCount);
 
                 Console.WriteLine("ScApp >> RefreshData topicCount = {0}", topicCount);
                 //Console.WriteLine("ScApp >> retval for 'RefreshData()' = {0}", r[1, 0].ToString());
@@ -266,10 +301,10 @@ namespace CompositeMan
                     {
                         value = 0;
                         double.TryParse(r[1, i].ToString(), out value);
-                        Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(), r[0, i].ToString(), r.Length);
+                        Console.WriteLine("ScApp >> valor = {0} para topic = {1} e r = {2}", r[1, i].ToString(),
+                            r[0, i].ToString(), r.Length);
 
                         //if (r[0, i].ToString() == )
-
                     }
 
                     if (firstUpdate)
@@ -278,15 +313,14 @@ namespace CompositeMan
                         //resizeLadder();
                     }
                 }
+
                 Console.WriteLine("ScApp >> r.Length = {0}", r.Length);
                 Thread.Sleep(100);
-
             }
         }
 
         public void DisconnectRTD(int j)
         {
-
             // Disconnect from data topic.
             int[] topicIDs = new int[3];
             topicIDs[0] = 100 * j;
@@ -294,31 +328,26 @@ namespace CompositeMan
             topicIDs[2] = topicIDs[1]++;
             for (int i = 0; i < topicIDs.Length; i++)
             {
-                server.DisconnectData(topicIDs[i]);
+                _rtdServer.DisconnectData(topicIDs[i]);
                 Console.WriteLine("ScApp >> DisconnectData topicID = {0}", topicIDs[i]);
             }
-
         }
 
         public void TerminateRTD()
-        {// Shutdown the RTD server.
+        {
+            // Shutdown the RTD server.
             if (IsRTDConnected())
             {
-                server.ServerTerminate();
+                _rtdServer.ServerTerminate();
                 Console.WriteLine("ScApp >> ServerTerminate");
             }
         }
 
-        private void CartesianChart_Loaded(object sender, RoutedEventArgs e)
-        {
-
-        }
-
         public void PrintResult(double[] source)
         {
-            label_abert.Content = source[0].ToString();
-            label_fech.Content = source[1].ToString();
-            label_ultimo.Content = source[2].ToString();
+            LavelValueOpen.Content = source[0].ToString();
+            LabelFech.Content = source[1].ToString();
+            LabelUltimo.Content = source[2].ToString();
         }
 
         private bool IsRTDConnected()
@@ -326,7 +355,6 @@ namespace CompositeMan
             return ret.ToString() == "1";
         }
 
-        
 
         #region INotifyPropertyChanged implementation
 
@@ -334,8 +362,7 @@ namespace CompositeMan
 
         protected virtual void OnPropertyChanged(string propertyName = null)
         {
-            if (PropertyChanged != null)
-                PropertyChanged.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
 
         #endregion
@@ -348,8 +375,7 @@ namespace CompositeMan
 
         public IRTDUpdateEvent()
         {
-            // Do not call the RTD Heartbeat()
-            // method.
+            // Do not call the RTD Heartbeat() method.
             HeartbeatInterval = -1;
         }
 
@@ -385,6 +411,5 @@ namespace CompositeMan
             get { return _ult; }
             set { _ult = value; }
         }
-
     }
 }

@@ -3,36 +3,78 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ScApp CompositeMan" Height="1080" Width="1920"
         WindowStartupLocation="CenterScreen" WindowState="Maximized" MinWidth="41">
-    
+
     <Grid Margin="0">
 
-        <!-- BG -->
-        <Image Source="assets\bg.png" VerticalAlignment="Bottom" IsEnabled="False" Margin="0" Height="1049" />
+        <!-- Background -->
+        <Image Height="1049" Source="assets\bg.png" VerticalAlignment="Bottom" />
 
         <!-- Status Bar-->
-        <StatusBar x:Name="statusBar" Margin="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Bottom"
-                   Height="30" VerticalAlignment="Bottom">
-            <TextBox Text="ScApp.link" Width="70" />
+        <StatusBar x:Name="StatusBar"
+                   Height="30"
+                   Margin="0"
+                   HorizontalContentAlignment="Center" VerticalContentAlignment="Bottom"
+                   VerticalAlignment="Bottom">
+            <TextBox Width="70" Text="ScApp.link" />
             <Separator />
-            <TextBox x:Name="labelStatusConnection" Text="" TextAlignment="Right" />
+            <TextBox x:Name="LabelStatusConnection" TextAlignment="Right" />
         </StatusBar>
-        <!-- Footer -->
-        <Label Margin="0,0,0,30" VerticalAlignment="Bottom" FontSize="14" FontWeight="Thin"
-               HorizontalContentAlignment="Center" Padding="5,0" Content="desenvolvido por : SchillerApp - ScApp.link"
-               FontFamily="Consolas" Height="20" />
+
+        <!-- Rodapé -->
+        <Label x:Name="Footer"
+               Height="20"
+               Margin="0,0,0,30"
+               Padding="5,0"
+               HorizontalContentAlignment="Center" VerticalAlignment="Bottom"
+               FontSize="14" FontWeight="Thin"
+               Content="Desenvolvido por : SchillerApp - ScApp.link" />
 
         <!-- DEV Title -->
-        <Image HorizontalAlignment="Left" Margin="20,20,0,0" VerticalAlignment="Top" Source="assets/logo_512.png"
-               Width="64" Height="64" Stretch="UniformToFill" />
-        <Label x:Name="label_title" Content="" HorizontalAlignment="Left" Margin="61,20,0,0" VerticalAlignment="Top"
-               FontSize="48" Width="380" FontWeight="SemiBold" Padding="10,0"
-               ScrollViewer.VerticalScrollBarVisibility="Disabled" Height="64" />
+        <Image x:Name="Logo"
+               Height="64" Width="64"
+               Margin="20,20,0,0"
+               HorizontalAlignment="Left" VerticalAlignment="Top"
+               Stretch="UniformToFill"
+               Source="assets/logo_512.png" />
 
+        <Label x:Name="LabelTitle"
+               Height="64" Width="380"
+               Margin="61,20,0,0"
+               Padding="10,0"
+               HorizontalAlignment="Left" VerticalAlignment="Top"
+               FontSize="48" FontWeight="SemiBold"
+               Content="SchillerApp" />
 
-        <Label HorizontalAlignment="Left" Margin="1622,216,0,0" VerticalAlignment="Top" FontSize="22"
-               Content="Abertura" Padding="10,0,0,0" VerticalContentAlignment="Center" Height="30" Width="95" />
+        <Label x:Name="LabelOpen"
+               Height="30" Width="95"
+               Margin="1622,216,0,0"
+               Padding="10,0,0,0"
+               HorizontalAlignment="Left" VerticalAlignment="Top"
+               VerticalContentAlignment="Center"
+               FontSize="22"
+               Content="Abertura" />
 
-        <Label x:Name="label_abert" Content="000000" HorizontalAlignment="Center" Margin="1736,190,20,0"
+        <Label x:Name="LavelValueOpen"
+               Height="70" Width="150"
+               Margin="1736,190,20,0"
+               Padding="0"
+               Content="000000"
+               HorizontalAlignment="Center" VerticalAlignment="Top"
+               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+               FontSize="36" FontWeight="SemiBold"
+               Background="WhiteSmoke"
+               BorderThickness="1"
+               ClipToBounds="True"
+               IsEnabled="False">
+            <Label.BorderBrush>
+                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
+            </Label.BorderBrush>
+        </Label>
+
+        <Button x:Name="ButtonConnect" Content="CONECTAR" Margin="0,20,20,0" VerticalAlignment="Top" Width="270"
+                Height="64" FontSize="36" FontWeight="Medium" Click="ButtonConnect_Click" HorizontalAlignment="Right" />
+
+        <Label x:Name="LabelFech" Content="000000" HorizontalAlignment="Center" Margin="1742,269,20,0"
                VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
                FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
                HorizontalContentAlignment="Center" IsEnabled="False">
@@ -40,9 +82,8 @@
                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
             </Label.BorderBrush>
         </Label>
-        <Button x:Name="btn_connect" Content="CONECTAR" Margin="0,20,20,0" VerticalAlignment="Top" Width="270"
-                Height="64" FontSize="36" FontWeight="Medium" Click="BtnConnect" HorizontalAlignment="Right" />
-        <Label x:Name="label_fech" Content="000000" HorizontalAlignment="Center" Margin="1742,269,20,0"
+
+        <Label x:Name="LabelUltimo" Content="000000" HorizontalAlignment="Center" Margin="1742,361,20,0"
                VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
                FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
                HorizontalContentAlignment="Center" IsEnabled="False">
@@ -50,21 +91,17 @@
                 <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
             </Label.BorderBrush>
         </Label>
-        <Label x:Name="label_ultimo" Content="000000" HorizontalAlignment="Center" Margin="1742,361,20,0"
-               VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
-               FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
-               HorizontalContentAlignment="Center" IsEnabled="False">
-            <Label.BorderBrush>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
-            </Label.BorderBrush>
-        </Label>
+
         <Label HorizontalAlignment="Left" Margin="1546,269,0,0" VerticalAlignment="Top" FontSize="22"
                Content="Fechamento D-1" Padding="10,0,0,0" VerticalContentAlignment="Center" Height="29" Width="171" />
+
         <Label HorizontalAlignment="Left" Margin="1642,387,0,0" VerticalAlignment="Top" FontSize="22" Content="Último"
                Padding="10,0,0,0" VerticalContentAlignment="Center" Height="29" Width="75" />
+
         <Label HorizontalAlignment="Left" Margin="1622,148,0,0" VerticalAlignment="Top" FontSize="22" Content="Ativo"
                Padding="10,0,0,0" VerticalContentAlignment="Center" Height="30" Width="60" />
-        <Label x:Name="label_ativo" HorizontalAlignment="Left" Margin="90,120,0,0" VerticalAlignment="Top"
+
+        <Label x:Name="LabelAtivo" HorizontalAlignment="Left" Margin="90,120,0,0" VerticalAlignment="Top"
                FontSize="22" Content="" Padding="10,0,0,0" VerticalContentAlignment="Center" Width="380" Height="29" />
 
     </Grid>
