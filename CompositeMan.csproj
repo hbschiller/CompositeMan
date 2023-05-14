@@ -8,6 +8,11 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Assets\bg.png" />
+    <None Remove="Assets\logo_512.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <COMReference Include="RTDTrading">
       <WrapperTool>tlbimp</WrapperTool>
       <VersionMinor>0</VersionMinor>
@@ -21,6 +26,11 @@
 
   <ItemGroup>
     <Folder Include="Models\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Assets\bg.png" />
+    <Resource Include="Assets\logo_512.png" />
   </ItemGroup>
 
 </Project>

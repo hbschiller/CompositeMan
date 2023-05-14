@@ -2,114 +2,213 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ScApp CompositeMan" Height="1080" Width="1920"
-        WindowStartupLocation="CenterScreen" WindowState="Maximized" MinWidth="41">
+        WindowStartupLocation="CenterScreen" WindowState="Maximized">
 
     <Grid Margin="0">
 
-        <!-- Background -->
-        <Image Height="1049" Source="assets\bg.png" VerticalAlignment="Bottom" />
+        <Grid.Background>
+            <ImageBrush ImageSource="Assets/bg.png" Stretch="Uniform" />
+        </Grid.Background>
 
-        <!-- Status Bar-->
-        <StatusBar x:Name="StatusBar"
-                   Height="30"
-                   Margin="0"
-                   HorizontalContentAlignment="Center" VerticalContentAlignment="Bottom"
-                   VerticalAlignment="Bottom">
-            <TextBox Width="70" Text="ScApp.link" />
-            <Separator />
-            <TextBox x:Name="LabelStatusConnection" TextAlignment="Right" />
-        </StatusBar>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
 
         <!-- Rodapé -->
         <Label x:Name="Footer"
-               Height="20"
-               Margin="0,0,0,30"
-               Padding="5,0"
-               HorizontalContentAlignment="Center" VerticalAlignment="Bottom"
+               Grid.Row="1"
+               Margin="0"
                FontSize="14" FontWeight="Thin"
+               VerticalContentAlignment="Center" HorizontalContentAlignment="Center"
                Content="Desenvolvido por : SchillerApp - ScApp.link" />
 
-        <!-- DEV Title -->
-        <Image x:Name="Logo"
-               Height="64" Width="64"
-               Margin="20,20,0,0"
-               HorizontalAlignment="Left" VerticalAlignment="Top"
-               Stretch="UniformToFill"
-               Source="assets/logo_512.png" />
+        <!-- Status Bar-->
+        <StatusBar x:Name="StatusBar"
+                   Grid.Row="2"
+                   Height="48"
+                   Margin="0"
+                   VerticalContentAlignment="Center"
+                   VerticalAlignment="Bottom">
+            <TextBox Text="ScApp.link" FontSize="16" Margin="8 0" Padding="16 4"/>
+            <Separator />
+            <TextBox x:Name="LabelStatusConnection" Text="status message" FontSize="16" Margin="8 0" Padding="16 4" />
+        </StatusBar>
 
-        <Label x:Name="LabelTitle"
-               Height="64" Width="380"
-               Margin="61,20,0,0"
-               Padding="10,0"
-               HorizontalAlignment="Left" VerticalAlignment="Top"
-               FontSize="48" FontWeight="SemiBold"
-               Content="SchillerApp" />
+        <!-- Main Grid -->
+        <Grid x:Name="MainGrid"
+              Row="0">
 
-        <Label x:Name="LabelOpen"
-               Height="30" Width="95"
-               Margin="1622,216,0,0"
-               Padding="10,0,0,0"
-               HorizontalAlignment="Left" VerticalAlignment="Top"
-               VerticalContentAlignment="Center"
-               FontSize="22"
-               Content="Abertura" />
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-        <Label x:Name="LavelValueOpen"
-               Height="70" Width="150"
-               Margin="1736,190,20,0"
-               Padding="0"
-               Content="000000"
-               HorizontalAlignment="Center" VerticalAlignment="Top"
-               HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-               FontSize="36" FontWeight="SemiBold"
-               Background="WhiteSmoke"
-               BorderThickness="1"
-               ClipToBounds="True"
-               IsEnabled="False">
-            <Label.BorderBrush>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
-            </Label.BorderBrush>
-        </Label>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <Button x:Name="ButtonConnect" Content="CONECTAR" Margin="0,20,20,0" VerticalAlignment="Top" Width="270"
-                Height="64" FontSize="36" FontWeight="Medium" Click="ButtonConnect_Click" HorizontalAlignment="Right" />
+            <!-- DEV Title -->
+            <StackPanel x:Name="StackPanelTitle"
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Left"
+                        Orientation="Horizontal">
 
-        
-        <Button x:Name="ButtonRequest" Content="REQUISITAR" Margin="0,20,340,0" VerticalAlignment="Top" Width="270"
-                Height="64" FontSize="36" FontWeight="Medium" Click="ButtonRequest_Click" HorizontalAlignment="Right" />
+                <Image x:Name="Logo"
+                       Height="80" Width="80"
+                       Margin=" 24"
+                       VerticalAlignment="Top"
+                       Source="assets/logo_512.png" />
 
-        <Button x:Name="ButtonRefresh" Content="ATUALIZAR" Margin="0,20,680,0" VerticalAlignment="Top" Width="270"
-                Height="64" FontSize="36" FontWeight="Medium" Click="ButtonRefresh_Click" HorizontalAlignment="Right" />
+                <Label x:Name="LabelTitle"
+                       Margin="8 0"
+                       VerticalAlignment="Center"
+                       FontSize="48" FontWeight="SemiBold"
+                       Content="SchillerApp" />
 
-        <Label x:Name="LabelValueClose" Content="000000" HorizontalAlignment="Center" Margin="1742,269,20,0"
-               VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
-               FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
-               HorizontalContentAlignment="Center" IsEnabled="False">
-            <Label.BorderBrush>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
-            </Label.BorderBrush>
-        </Label>
+            </StackPanel>
 
-        <Label x:Name="LabelValueLast" Content="000000" HorizontalAlignment="Center" Margin="1742,361,20,0"
-               VerticalAlignment="Top" FontSize="36" Height="70" Width="150" VerticalContentAlignment="Center"
-               FontWeight="SemiBold" Background="WhiteSmoke" Padding="0" BorderThickness="1" ClipToBounds="True"
-               HorizontalContentAlignment="Center" IsEnabled="False">
-            <Label.BorderBrush>
-                <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
-            </Label.BorderBrush>
-        </Label>
+            <!-- Buttons -->
+            <StackPanel x:Name="StackPanelButtons"
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Margin="0"
+                        VerticalAlignment="Center"
+                        HorizontalAlignment="Right"
+                        Orientation="Horizontal">
 
-        <Label HorizontalAlignment="Left" Margin="1546,269,0,0" VerticalAlignment="Top" FontSize="22"
-               Content="Fechamento D-1" Padding="10,0,0,0" VerticalContentAlignment="Center" Height="29" Width="171" />
+                <Button x:Name="ButtonRefresh"
+                        Height="64" Width="256"
+                        Margin="8"
+                        FontSize="36" FontWeight="Medium"
+                        Content="ATUALIZAR"
+                        Click="ButtonRefresh_Click" />
 
-        <Label HorizontalAlignment="Left" Margin="1642,387,0,0" VerticalAlignment="Top" FontSize="22" Content="Último"
-               Padding="10,0,0,0" VerticalContentAlignment="Center" Height="29" Width="75" />
+                <Button x:Name="ButtonRequest"
+                        Height="64" Width="256"
+                        Margin="8"
+                        FontSize="36" FontWeight="Medium"
+                        Content="REQUISITAR"
+                        Click="ButtonRequest_Click" />
 
-        <Label HorizontalAlignment="Left" Margin="1622,148,0,0" VerticalAlignment="Top" FontSize="22" Content="Ativo"
-               Padding="10,0,0,0" VerticalContentAlignment="Center" Height="30" Width="60" />
+                <Button x:Name="ButtonConnect"
+                        Height="64" Width="256"
+                        Margin="8"
+                        FontSize="36" FontWeight="Medium"
+                        Content="CONECTAR"
+                        Click="ButtonConnect_Click" />
 
-        <Label x:Name="LabelValueTicker" HorizontalAlignment="Left" Margin="90,120,0,0" VerticalAlignment="Top"
-               FontSize="22" Content="" Padding="10,0,0,0" VerticalContentAlignment="Center" Width="380" Height="29" />
+            </StackPanel>
+
+            <!-- Values -->
+            <Grid x:Name="GridValues"
+                  Grid.Row="1" Grid.Column="1">
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="16" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="16" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Ticker -->
+                <Label x:Name="LabelTicker"
+                       Grid.Row="0" Grid.Column="0"
+                       Margin="8"
+                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                       FontSize="36"
+                       Content="Ativo" />
+
+                <Label x:Name="LabelValueTicker"
+                       Grid.Row="0" Grid.Column="2"
+                       Margin="8" Padding="16 8"
+                       VerticalAlignment="Center"
+                       FontSize="36" FontWeight="SemiBold"
+                       Background="WhiteSmoke"
+                       BorderThickness="1"
+                       Content="Ticker">
+                    <Label.BorderBrush>
+                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
+                    </Label.BorderBrush>
+                </Label>
+
+                <!-- Open -->
+                <Label x:Name="LabelOpen"
+                       Grid.Row="1" Grid.Column="0"
+                       Margin="8"
+                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                       FontSize="36"
+                       Content="Abertura" />
+
+                <Label x:Name="LavelValueOpen"
+                       Grid.Row="1" Grid.Column="2"
+                       Margin="8" Padding="16 8"
+                       VerticalAlignment="Center"
+                       FontSize="36" FontWeight="SemiBold"
+                       Background="WhiteSmoke"
+                       BorderThickness="1"
+                       Content="000000">
+                    <Label.BorderBrush>
+                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
+                    </Label.BorderBrush>
+                </Label>
+
+                <!-- Close -->
+                <Label x:Name="LabelClose"
+                       Grid.Row="2" Grid.Column="0"
+                       Margin="8"
+                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                       FontSize="36"
+                       Content="Fechamento D-1" />
+
+                <Label x:Name="LabelValueClose"
+                       Grid.Row="2" Grid.Column="2"
+                       Margin="8" Padding="16 8"
+                       VerticalAlignment="Center"
+                       FontSize="36" FontWeight="SemiBold"
+                       Background="WhiteSmoke"
+                       BorderThickness="1"
+                       Content="000000">
+                    <Label.BorderBrush>
+                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
+                    </Label.BorderBrush>
+                </Label>
+
+                <!-- Last -->
+                <Label x:Name="LabelLast"
+                       Grid.Row="3" Grid.Column="0"
+                       Margin="8"
+                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                       FontSize="36"
+                       Content="Último" />
+
+                <Label x:Name="LabelValueLast"
+                       Grid.Row="3" Grid.Column="2"
+                       Margin="8" Padding="16 8"
+                       VerticalAlignment="Center"
+                       FontSize="36" FontWeight="SemiBold"
+                       Background="WhiteSmoke"
+                       BorderThickness="1"
+                       Content="000000">
+                    <Label.BorderBrush>
+                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
+                    </Label.BorderBrush>
+                </Label>
+
+            </Grid>
+
+        </Grid>
 
     </Grid>
 </Window>

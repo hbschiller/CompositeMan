@@ -1,5 +1,4 @@
-﻿using System.ComponentModel;
-using System.Threading;
+﻿using System.Threading;
 using System;
 using System.Globalization;
 using System.Windows;
@@ -9,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace CompositeMan
 {
-    public partial class MainWindow : Window, INotifyPropertyChanged
+    public partial class MainWindow : Window
     {
         private const string RtdProgId = "rtdtrading.rtdserver";
 
@@ -233,17 +232,7 @@ namespace CompositeMan
             _rtdServer.ServerTerminate();
             _serverState = 0;
         }
-
-        #region INotifyPropertyChanged implementation
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        #endregion
+        
     }
 
     public class RtdUpdateEvent : IRTDUpdateEvent
