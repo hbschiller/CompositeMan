@@ -1,8 +1,8 @@
 ﻿<Window x:Class="CompositeMan.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="ScApp CompositeMan" Height="1080" Width="1920"
-        WindowStartupLocation="CenterScreen" WindowState="Maximized">
+        Title="ScApp CompositeMan" Height="800" Width="600"
+        WindowStartupLocation="CenterScreen">
 
     <Grid Margin="0">
 
@@ -31,7 +31,7 @@
                    Margin="0"
                    VerticalContentAlignment="Center"
                    VerticalAlignment="Bottom">
-            <TextBox Text="ScApp.link" FontSize="16" Margin="8 0" Padding="16 4"/>
+            <TextBox Text="ScApp.link" FontSize="16" Margin="8 0" Padding="16 4" />
             <Separator />
             <TextBox x:Name="LabelStatusConnection" Text="status message" FontSize="16" Margin="8 0" Padding="16 4" />
         </StatusBar>
@@ -42,20 +42,21 @@
 
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="32" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
             <!-- DEV Title -->
             <StackPanel x:Name="StackPanelTitle"
                         Grid.Row="0"
-                        Grid.Column="0"
                         VerticalAlignment="Center"
-                        HorizontalAlignment="Left"
+                        HorizontalAlignment="Center"
                         Orientation="Horizontal">
 
                 <Image x:Name="Logo"
@@ -73,40 +74,45 @@
             </StackPanel>
 
             <!-- Buttons -->
-            <StackPanel x:Name="StackPanelButtons"
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Margin="0"
-                        VerticalAlignment="Center"
-                        HorizontalAlignment="Right"
-                        Orientation="Horizontal">
+            <Grid x:Name="GridPanelButtons"
+                  Grid.Row="2"
+                  Margin="0">
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
 
                 <Button x:Name="ButtonRefresh"
-                        Height="64" Width="256"
+                        Grid.Column="0"
+                        Height="56"
                         Margin="8"
-                        FontSize="36" FontWeight="Medium"
+                        FontSize="24" FontWeight="Medium"
                         Content="ATUALIZAR"
                         Click="ButtonRefresh_Click" />
 
                 <Button x:Name="ButtonRequest"
-                        Height="64" Width="256"
+                        Grid.Column="1"
+                        Height="56"
                         Margin="8"
-                        FontSize="36" FontWeight="Medium"
+                        FontSize="24" FontWeight="Medium"
                         Content="REQUISITAR"
                         Click="ButtonRequest_Click" />
 
                 <Button x:Name="ButtonConnect"
-                        Height="64" Width="256"
+                        Grid.Column="2"
+                        Height="56"
                         Margin="8"
-                        FontSize="36" FontWeight="Medium"
+                        FontSize="24" FontWeight="Medium"
                         Content="CONECTAR"
                         Click="ButtonConnect_Click" />
 
-            </StackPanel>
+            </Grid>
 
             <!-- Values -->
             <Grid x:Name="GridValues"
-                  Grid.Row="1" Grid.Column="1">
+                  Grid.Row="4">
 
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
@@ -118,7 +124,7 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
-                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="16" />
                 </Grid.ColumnDefinitions>
 
