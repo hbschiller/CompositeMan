@@ -80,20 +80,12 @@
 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-
-                <Button x:Name="ButtonRefresh"
-                        Grid.Column="0"
-                        Height="56"
-                        Margin="8"
-                        FontSize="24" FontWeight="Medium"
-                        Content="ATUALIZAR"
-                        Click="ButtonRefresh_Click" />
-
+                
                 <Button x:Name="ButtonRequest"
-                        Grid.Column="1"
+                        Grid.Column="0"
                         Height="56"
                         Margin="8"
                         FontSize="24" FontWeight="Medium"
@@ -133,7 +125,7 @@
                        Grid.Row="0" Grid.Column="0"
                        Margin="8"
                        VerticalAlignment="Center" HorizontalAlignment="Right"
-                       FontSize="36"
+                       FontSize="32"
                        Content="Ativo" />
 
                 <Label x:Name="LabelValueTicker"
@@ -154,7 +146,7 @@
                        Grid.Row="1" Grid.Column="0"
                        Margin="8"
                        VerticalAlignment="Center" HorizontalAlignment="Right"
-                       FontSize="36"
+                       FontSize="32"
                        Content="Abertura" />
 
                 <Label x:Name="LavelValueOpen"
@@ -175,8 +167,8 @@
                        Grid.Row="2" Grid.Column="0"
                        Margin="8"
                        VerticalAlignment="Center" HorizontalAlignment="Right"
-                       FontSize="36"
-                       Content="Fechamento D-1" />
+                       FontSize="32"
+                       Content="Fechamento[1]" />
 
                 <Label x:Name="LabelValueClose"
                        Grid.Row="2" Grid.Column="2"
@@ -196,7 +188,7 @@
                        Grid.Row="3" Grid.Column="0"
                        Margin="8"
                        VerticalAlignment="Center" HorizontalAlignment="Right"
-                       FontSize="36"
+                       FontSize="32"
                        Content="Último" />
 
                 <Label x:Name="LabelValueLast"
