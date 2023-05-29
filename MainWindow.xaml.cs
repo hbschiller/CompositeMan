@@ -32,6 +32,8 @@ namespace CompositeMan
             // Check if the server is already connected
             if (_serverState == 1)
             {
+                ButtonUpdate.Content = "ATUALIZAR";
+                _cancellationTokenSource?.Cancel();
                 DisconnectRtdData();
                 TerminateRtdServer();
                 UpdateUi(IsRtdConnected);
