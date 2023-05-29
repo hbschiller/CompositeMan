@@ -80,12 +80,22 @@
 
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="8" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="8" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
-                
-                <Button x:Name="ButtonRequest"
+
+                <Button x:Name="ButtonUpdate"
                         Grid.Column="0"
+                        Height="56"
+                        Margin="8"
+                        FontSize="24" FontWeight="Medium"
+                        Content="ATUALIZAR"
+                        Click="ButtonUpdate_Click" />
+
+                <Button x:Name="ButtonRequest"
+                        Grid.Column="2"
                         Height="56"
                         Margin="8"
                         FontSize="24" FontWeight="Medium"
@@ -93,7 +103,7 @@
                         Click="ButtonRequest_Click" />
 
                 <Button x:Name="ButtonConnect"
-                        Grid.Column="2"
+                        Grid.Column="4"
                         Height="56"
                         Margin="8"
                         FontSize="24" FontWeight="Medium"
@@ -107,6 +117,7 @@
                   Grid.Row="4">
 
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -193,6 +204,27 @@
 
                 <Label x:Name="LabelValueLast"
                        Grid.Row="3" Grid.Column="2"
+                       Margin="8" Padding="16 8"
+                       VerticalAlignment="Center"
+                       FontSize="36" FontWeight="SemiBold"
+                       Background="WhiteSmoke"
+                       BorderThickness="1"
+                       Content="000000">
+                    <Label.BorderBrush>
+                        <SolidColorBrush Color="{DynamicResource {x:Static SystemColors.ControlDarkDarkColorKey}}" />
+                    </Label.BorderBrush>
+                </Label>
+
+                <!-- MA -->
+                <Label x:Name="LabelMovingAverage"
+                       Grid.Row="4" Grid.Column="0"
+                       Margin="8"
+                       VerticalAlignment="Center" HorizontalAlignment="Right"
+                       FontSize="32"
+                       Content="Média Móvel" />
+
+                <Label x:Name="LabelValueLabelMovingAverage"
+                       Grid.Row="4" Grid.Column="2"
                        Margin="8" Padding="16 8"
                        VerticalAlignment="Center"
                        FontSize="36" FontWeight="SemiBold"

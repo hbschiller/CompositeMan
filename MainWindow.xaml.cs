@@ -1,118 +1,30 @@
-﻿using System.Threading;
-using System;
-using System.Globalization;
+﻿using System;
 using System.Windows;
 using RTDTrading;
-using Constants = CompositeMan.Utils.Constants;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Windows.Controls;
 
 namespace CompositeMan
 {
     public partial class MainWindow : Window
     {
-        private const string RtdProgId = "rtdtrading.rtdserver";
-
-        private readonly RtdUpdateEvent _updateEvent = new();
-
         private IRtdServer? _rtdServer;
 
         private int _serverState = -1;
 
-        private MarketData? indMarketData;
-
-        private int heartbeatStatus;
-
-        // Topics
-        private readonly object[,] _topics =
-        {
-            { 101, 102, 103 },
-            { "ABE", "FEC", "ULT" }
-        };
+        private readonly RtdUpdateEvent _updateEvent = new();
 
         private bool IsRtdConnected => _serverState == 1;
+
+        private CancellationTokenSource? _cancellationTokenSource;
+
+        private Task? _updateMarketDataTask;
 
         public MainWindow()
         {
             InitializeComponent();
-            Task.Run(InitializeRtdServerAsync);
-        }
-
-        private async Task InitializeRtdServerAsync()
-        {
-            try
-            {
-                await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = "Iniciando servidor"; });
-
-                // Create the RTD server
-                var rtdType = Type.GetTypeFromProgID(RtdProgId);
-                if (rtdType == null)
-                {
-                    throw new Exception("Houve uma olhada ao carregar o tipo do objeto");
-                }
-
-                _rtdServer = Activator.CreateInstance(rtdType) as IRtdServer;
-
-                // Start the RTD server
-                if (_rtdServer == null)
-                {
-                    throw new Exception("Houve uma olhada ao carregar o servidor");
-                }
-
-                _serverState = _rtdServer.ServerStart(_updateEvent);
-
-                // Server Started. Update the Label on the UI thread
-
-                _updateEvent.RtdUpdated += UpdateMarketData;
-
-                await Dispatcher.InvokeAsync(() => { UpdateUi(IsRtdConnected); });
-            }
-            catch (Exception e)
-            {
-                await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = $"Houve um erro. {e.Message}"; });
-            }
-        }
-
-        private void UpdateMarketData(object? sender, EventArgs e)
-        {
-            Task.Run(UpdateRtdDataAsync);
-        }
-
-        private async Task UpdateRtdDataAsync()
-        {
-            // Constants.TickerIndfut
-
-            if (_rtdServer == null) return;
-
-            // Check that the RTD server is still alive.
-            if (_rtdServer.Heartbeat() == 0)
-            {
-                await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = $"Houve um erro"; });
-                return;
-            }
-
-            int arraySize = _topics.GetLength(0);
-            object[,] result = new object[2, arraySize];
-            result = (object[,])_rtdServer.RefreshData(0);
-
-            if (result.GetLength(1) > 0)
-            {
-                double last = 0;
-
-                for (int columnIndex = 0; columnIndex < result.GetLength(1); columnIndex++)
-                {
-                    object topicId = result[0, columnIndex];
-                    object topicValue = result[1, columnIndex];
-
-                    last = (int)topicId == (int)_topics[0, 2]
-                        ? double.Parse(topicValue.ToString() ?? string.Empty)
-                        : 0;
-                }
-
-                if (indMarketData == null) return;
-                indMarketData.LastPrice = last;
-
-                await Dispatcher.InvokeAsync(() => { UpdateUi(IsRtdConnected, indMarketData); });
-            }
+            UpdateUi(false);
         }
 
         private void ButtonConnect_Click(object sender, RoutedEventArgs e)
@@ -135,57 +47,159 @@ namespace CompositeMan
             // If not connected, return
             if (_serverState != 1) return;
 
-            indMarketData = RequestDataFromRtd(Constants.TickerIndfut);
-            UpdateUi(IsRtdConnected, indMarketData);
+            MarketData? marketData = RequestDataFromRtd();
+            UpdateUi(IsRtdConnected, marketData);
         }
 
-        private MarketData? RequestDataFromRtd(string ticker)
+        private void ButtonUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            // If not connected, return
+            if (_serverState != 1) return;
+
+            if (ButtonUpdate.Content.ToString() == "ATUALIZAR")
+            {
+                ButtonUpdate.Content = "ATUALIZANDO";
+                _cancellationTokenSource = new CancellationTokenSource();
+                _updateMarketDataTask = Task.Run(() => UpdateMarketDataTask(_cancellationTokenSource.Token));
+            }
+            else
+            {
+                ButtonUpdate.Content = "ATUALIZAR";
+                _cancellationTokenSource?.Cancel();
+            }
+        }
+
+        private async Task InitializeRtdServerAsync()
+        {
+            await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = "Iniciando servidor"; });
+
+            try
+            {
+                // Create the RTD server
+                _rtdServer = new RtdServer();
+
+                // Start RTD server
+                _serverState = _rtdServer.ServerStart(_updateEvent);
+
+                await Dispatcher.InvokeAsync(() => { UpdateUi(IsRtdConnected); });
+            }
+            catch (Exception e)
+            {
+                await Dispatcher.InvokeAsync(() => { LabelStatusConnection.Text = $"Houve um erro. {e.Message}"; });
+            }
+        }
+
+        private MarketData? RequestDataFromRtd()
         {
             if (_rtdServer == null) return null;
 
-            // Topic Names
-            Object[] topics = new Object[2];
-            topics[0] = ticker;
+            object? results;
 
-            // Connect to the RTD server and retrieve data
-            object? result;
+            string ticker = "WINFUT_F_0";
 
-            topics[1] = _topics[1, 0];
-            result = _rtdServer.ConnectData((int)_topics[0, 0], topics, false);
-            double.TryParse(result.ToString(), out var openPrice);
+            // Abertura do Dia Atual
+            Array topicAbe = new object[] { ticker, "ABE" };
+            results = _rtdServer.ConnectData(901, topicAbe, false);
+            string openPrice = results.ToString() ?? "Indisponível";
 
-            topics[1] = _topics[1, 1];
-            result = _rtdServer.ConnectData((int)_topics[0, 1], topics, false);
-            double.TryParse(result.ToString(), out var closePrice);
+            // Fechamento do Dia Anterior
+            Array topicFec = new object[] { ticker, "FEC" };
+            results = _rtdServer.ConnectData(902, topicFec, false);
+            string closePrice = results.ToString() ?? "Indisponível";
 
-            topics[1] = _topics[1, 2];
-            result = _rtdServer.ConnectData((int)_topics[0, 2], topics, true);
-            double.TryParse(result.ToString(), out var lastPrice);
+            // Último Preço do Dia Atual
+            Array topicUlt = new object[] { ticker, "ULT" };
+            results = _rtdServer.ConnectData(903, topicUlt, true);
+            string lastPrice = results.ToString() ?? "Indisponível";
 
-            heartbeatStatus = _rtdServer.Heartbeat();
+            // Média Móvel 
+            Array topicMa = new object[] { ticker, "3" };
+            results = _rtdServer.ConnectData(904, topicMa, true);
+            string movingAverage = results.ToString() ?? "Indisponível";
 
             MarketData marketData = new()
             {
                 Ticker = ticker,
                 OpenPrice = openPrice,
                 ClosePrice = closePrice,
-                LastPrice = lastPrice
+                LastPrice = lastPrice,
+                MovingAverage = movingAverage
             };
 
             return marketData;
         }
-        
+
+        private void UpdateMarketDataTask(CancellationToken cancellationToken)
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                // Call your method here
+                MarketData? marketData = UpdateRtdData();
+
+                if (marketData != null)
+                    Dispatcher.InvokeAsync(() => { UpdateUi(IsRtdConnected, marketData); });
+
+                // Delay for 0.1 second
+                Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+            }
+        }
+
+        private MarketData? UpdateRtdData()
+        {
+            if (_rtdServer == null) return null;
+
+            int topicsCount = 0;
+            var results = (object[,])_rtdServer.RefreshData(ref topicsCount);
+
+            if (topicsCount == 0) return null;
+
+            if (results.GetLength(1) > 0)
+            {
+                string last = string.Empty, ma = string.Empty;
+
+                for (int columnIndex = 0; columnIndex < results.GetLength(1); columnIndex++)
+                {
+                    object topicId = results[0, columnIndex];
+                    object topicValue = results[1, columnIndex];
+
+                    switch ((int)topicId)
+                    {
+                        case 903:
+                            last = topicValue.ToString() ?? string.Empty;
+                            break;
+                        case 904:
+                            ma = topicValue.ToString() ?? string.Empty;
+                            break;
+                    }
+                }
+
+                MarketData marketData = new()
+                {
+                    LastPrice = last,
+                    MovingAverage = ma
+                };
+
+                return marketData;
+            }
+
+            return null;
+        }
+
         private void UpdateUi(bool isConnected, MarketData? marketData = null)
         {
             ButtonConnect.Content = isConnected ? "DESCONECTAR" : "CONECTAR";
             LabelStatusConnection.Text = isConnected ? "Conectado" : "Desconectado";
 
+            ButtonRequest.IsEnabled = isConnected;
+            ButtonUpdate.IsEnabled = isConnected;
+
             if (marketData != null)
             {
-                LabelValueTicker.Content = marketData.Ticker;
-                LavelValueOpen.Content = marketData.OpenPrice.ToString(CultureInfo.InvariantCulture);
-                LabelValueClose.Content = marketData.ClosePrice.ToString(CultureInfo.InvariantCulture);
-                LabelValueLast.Content = marketData.LastPrice.ToString(CultureInfo.InvariantCulture);
+                UpdateLabel(LabelValueTicker, marketData.Ticker);
+                UpdateLabel(LavelValueOpen, marketData.OpenPrice);
+                UpdateLabel(LabelValueClose, marketData.ClosePrice);
+                UpdateLabel(LabelValueLast, marketData.LastPrice);
+                UpdateLabel(LabelValueLabelMovingAverage, marketData.MovingAverage);
             }
             else
             {
@@ -193,18 +207,25 @@ namespace CompositeMan
                 LavelValueOpen.Content = "";
                 LabelValueClose.Content = "";
                 LabelValueLast.Content = "";
+                LabelValueLabelMovingAverage.Content = "";
             }
+        }
+
+        private void UpdateLabel(Label label, string? value)
+        {
+            if (value == null) return;
+            string? currentValue = label.Content.ToString();
+            if (currentValue == value || value == string.Empty) return;
+            label.Content = value;
         }
 
         private void DisconnectRtdData()
         {
-            if (!IsRtdConnected) return;
             if (_rtdServer == null) return;
-
-            for (int columnIndex = 0; columnIndex < _topics.GetLength(1); columnIndex++)
-            {
-                _rtdServer.DisconnectData((int)_topics[0, columnIndex]);
-            }
+            _rtdServer.DisconnectData(901);
+            _rtdServer.DisconnectData(902);
+            _rtdServer.DisconnectData(903);
+            _rtdServer.DisconnectData(904);
         }
 
         private void TerminateRtdServer()
@@ -216,12 +237,17 @@ namespace CompositeMan
             _rtdServer.ServerTerminate();
             _serverState = 0;
         }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _cancellationTokenSource?.Cancel();
+            _updateMarketDataTask?.Wait();
+            base.OnClosed(e);
         }
+    }
 
     public class RtdUpdateEvent : IRTDUpdateEvent
     {
-        public event EventHandler?  RtdUpdated;
-        
         public long Count { get; set; }
         public int HeartbeatInterval { get; set; }
 
@@ -239,7 +265,6 @@ namespace CompositeMan
         public void UpdateNotify()
         {
             Count++;
-            RtdUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -247,10 +272,12 @@ namespace CompositeMan
     {
         public string? Ticker { get; set; }
 
-        public double OpenPrice { get; set; }
+        public string? OpenPrice { get; set; }
 
-        public double ClosePrice { get; set; }
+        public string? ClosePrice { get; set; }
 
-        public double LastPrice { get; set; }
+        public string? LastPrice { get; set; }
+
+        public string? MovingAverage { get; set; }
     }
 }
