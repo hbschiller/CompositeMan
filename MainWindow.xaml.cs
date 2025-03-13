@@ -97,7 +97,7 @@ namespace CompositeMan
 
             object? results;
 
-            string ticker = "WINFUT_F_0";
+            const string ticker = "WINFUT_F_0";
 
             // Abertura do Dia Atual
             Array topicAbe = new object[] { ticker, "ABE" };
@@ -142,7 +142,7 @@ namespace CompositeMan
                     Dispatcher.InvokeAsync(() => { UpdateUi(IsRtdConnected, marketData); });
 
                 // Delay for 0.1 second
-                Task.Delay(TimeSpan.FromMilliseconds(100)).Wait();
+                Task.Delay(TimeSpan.FromMilliseconds(100), cancellationToken).Wait(cancellationToken);
             }
         }
 
@@ -151,40 +151,38 @@ namespace CompositeMan
             if (_rtdServer == null) return null;
 
             int topicsCount = 0;
-            var results = (object[,])_rtdServer.RefreshData(ref topicsCount);
+            object[,]? results = (object[,])_rtdServer.RefreshData(ref topicsCount);
 
             if (topicsCount == 0) return null;
 
-            if (results.GetLength(1) > 0)
+            if (results.GetLength(1) <= 0) return null;
+
+            string last = string.Empty, ma = string.Empty;
+
+            for (int columnIndex = 0; columnIndex < results.GetLength(1); columnIndex++)
             {
-                string last = string.Empty, ma = string.Empty;
+                object topicId = results[0, columnIndex];
+                object topicValue = results[1, columnIndex];
 
-                for (int columnIndex = 0; columnIndex < results.GetLength(1); columnIndex++)
+                switch ((int)topicId)
                 {
-                    object topicId = results[0, columnIndex];
-                    object topicValue = results[1, columnIndex];
-
-                    switch ((int)topicId)
-                    {
-                        case 903:
-                            last = topicValue.ToString() ?? string.Empty;
-                            break;
-                        case 904:
-                            ma = topicValue.ToString() ?? string.Empty;
-                            break;
-                    }
+                    case 903:
+                        last = topicValue.ToString() ?? string.Empty;
+                        break;
+                    case 904:
+                        ma = topicValue.ToString() ?? string.Empty;
+                        break;
                 }
-
-                MarketData marketData = new()
-                {
-                    LastPrice = last,
-                    MovingAverage = ma
-                };
-
-                return marketData;
             }
 
-            return null;
+            MarketData marketData = new()
+            {
+                LastPrice = last,
+                MovingAverage = ma
+            };
+
+            return marketData;
+
         }
 
         private void UpdateUi(bool isConnected, MarketData? marketData = null)
@@ -201,7 +199,7 @@ namespace CompositeMan
                 UpdateLabel(LavelValueOpen, marketData.OpenPrice);
                 UpdateLabel(LabelValueClose, marketData.ClosePrice);
                 UpdateLabel(LabelValueLast, marketData.LastPrice);
-                UpdateLabel(LabelValueLabelMovingAverage, marketData.MovingAverage);
+                UpdateLabel(LabelValueMovingAverage, marketData.MovingAverage);
             }
             else
             {
@@ -209,7 +207,7 @@ namespace CompositeMan
                 LavelValueOpen.Content = "";
                 LabelValueClose.Content = "";
                 LabelValueLast.Content = "";
-                LabelValueLabelMovingAverage.Content = "";
+                LabelValueMovingAverage.Content = "";
             }
         }
 

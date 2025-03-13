@@ -223,7 +223,7 @@
                        FontSize="32"
                        Content="Média Móvel" />
 
-                <Label x:Name="LabelValueLabelMovingAverage"
+                <Label x:Name="LabelValueMovingAverage"
                        Grid.Row="4" Grid.Column="2"
                        Margin="8" Padding="16 8"
                        VerticalAlignment="Center"
